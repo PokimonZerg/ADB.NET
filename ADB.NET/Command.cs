@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -10,6 +11,14 @@ namespace ADB.NET
     class Command
     {
         private byte[] command;
+        private byte[] content;
+        private byte[] status = new byte[4];
+        private byte[] length = new byte[4];
+
+        private static Encoding encoding = Encoding.ASCII;
+
+        private static byte[] OKAY = encoding.GetBytes("OKAY");
+        private static byte[] FAIL = encoding.GetBytes("FAIL");
 
         public Command(String command)
         {
@@ -17,39 +26,37 @@ namespace ADB.NET
             this.command = Encoding.UTF8.GetBytes(resultStr);
         }
 
-        public CommandOutput Execute()
+        public CommandResponse Execute()
         {
-            try
+            using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
             {
                 socket.Connect(Adb.HOST, Adb.PORT);
 
                 socket.Send(command);
 
-                var b = new byte[4];
-                socket.Receive(b);
+                socket.Receive(status);
 
+                if (status.SequenceEqual(OKAY))
+                {
+                    socket.Receive(length);
+                    
+                    content = new byte[int.Parse(encoding.GetString(length), NumberStyles.HexNumber)];
 
-                var z = new byte[4];
-                socket.Receive(z);
-                String lenHex = Encoding.GetEncoding("ISO-8859-1").GetString(z);
-                int len = int.Parse(lenHex, System.Globalization.NumberStyles.HexNumber);
+                    socket.Receive(content);
 
-                var  t = new byte[4];
-                socket.Receive(t);
-                lenHex = Encoding.GetEncoding("ISO-8859-1").GetString(t);
-                len = int.Parse(lenHex, System.Globalization.NumberStyles.HexNumber);
+                    return new CommandResponse(content);
+                }
+                else if (status.SequenceEqual(FAIL))
+                {
 
-
-                var gg = Encoding.GetEncoding("ISO-8859-1").GetString(b);
+                }
+                else
+                {
+                    throw new Exception("Unknown server response");
+                }
             }
-            finally
-            {
-                socket.Close();
-            }
 
-            return new CommandOutput();
+            return null;
         }
-
-        private static Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     }
 }

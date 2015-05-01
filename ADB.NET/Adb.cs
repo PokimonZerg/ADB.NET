@@ -9,7 +9,6 @@ namespace ADB.NET
 {
     public static class Adb
     {
-        private static int MAX_TIMEOUT = 12000;
         public static int PORT = 5037;
         public static String HOST = "localhost";
 
@@ -22,12 +21,14 @@ namespace ADB.NET
             startInfo.RedirectStandardOutput = true;
 
             Process process = Process.Start(startInfo);
+            //process.WaitForExit();
+            var output = process.StandardOutput.ReadToEnd().Split(new[] { '\n' }).Except(new[] { "" });
 
-            ProcessOutput output = ProcessOutput.Parse(process);
+            //ProcessOutput output = ProcessOutput.Parse(process);
 
-            process.WaitForExit(MAX_TIMEOUT);
+            process.WaitForExit();
 
-            if (!output.Contains("daemon started successfully") && !output.IsEmpty())
+            if (!output.Contains("daemon started successfully") && output.Count() != 0)
                 throw new Exception("Error occured while starting 'adb':" + output);
         }
 
@@ -40,9 +41,14 @@ namespace ADB.NET
         {
             var command = new Command("host:version");
 
-            var z = command.Execute();
+            var response = command.Execute();
 
-            return null;
+            return response.AsNumber().ToString();
         }
+    }
+
+    internal class CommandResult
+    {
+
     }
 }
