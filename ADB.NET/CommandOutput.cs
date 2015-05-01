@@ -22,5 +22,10 @@ namespace ADB.NET
         {
             return int.Parse(encoding.GetString(content), NumberStyles.HexNumber);
         }
+
+        public String AsString()
+        {
+            return encoding.GetString(content);
+        }
     }
 }

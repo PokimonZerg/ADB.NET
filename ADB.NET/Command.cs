@@ -22,8 +22,7 @@ namespace ADB.NET
 
         public Command(String command)
         {
-            String resultStr = String.Format("{0}{1}\n", command.Length.ToString("X4"), command);
-            this.command = Encoding.UTF8.GetBytes(resultStr);
+            this.command = encoding.GetBytes(command.Length.ToString("X4") + command + "\n");
         }
 
         public CommandResponse Execute()
@@ -35,28 +34,21 @@ namespace ADB.NET
                 socket.Send(command);
 
                 socket.Receive(status);
+                socket.Receive(length);
+
+                content = new byte[int.Parse(encoding.GetString(length), NumberStyles.HexNumber)];
+
+                socket.Receive(content);
 
                 if (status.SequenceEqual(OKAY))
                 {
-                    socket.Receive(length);
-                    
-                    content = new byte[int.Parse(encoding.GetString(length), NumberStyles.HexNumber)];
-
-                    socket.Receive(content);
-
                     return new CommandResponse(content);
-                }
-                else if (status.SequenceEqual(FAIL))
-                {
-
                 }
                 else
                 {
-                    throw new Exception("Unknown server response");
+                    throw new Exception(encoding.GetString(content));
                 }
             }
-
-            return null;
         }
     }
 }
