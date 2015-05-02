@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,65 +27,100 @@ namespace ADB.NET
 
             process.WaitForExit();
 
-            if (!output.Contains("daemon started successfully") && output.Count() != 0)
+            if (!output.Contains("* daemon started successfully *\r") && output.Count() != 0)
                 throw new Exception("Error occured while starting 'adb':" + output);
+        }
+
+        public static IEnumerable<AdbDevice> Devices
+        {
+            get
+            {
+                using (var link = new AdbLink())
+                {
+                    link.Send("host:devices");
+
+                    var length = link.RecieveLength();
+                    var response = link.Recieve(length);
+
+                    foreach (var line in response.Split(new[] { '\n' }))
+                    {
+                        if (String.IsNullOrEmpty(line)) continue;
+
+                        yield return new AdbDevice(line.Split(new[] { '\t' })[0]);
+                    }
+                }
+            }
         }
 
         public static void Connect(String host)
         {
-            var command = new Command("host:connect:" + host);
+            using (var link = new AdbLink())
+            {
+                link.Send("host:connect:" + host);
 
-            var response = command.Execute().AsString();
+                var length = link.RecieveLength();
+                var response = link.Recieve(length);
 
-            if (response.Contains("unable to connect"))
-                throw new Exception(response);
+                if (response.Contains("unable to connect"))
+                    throw new Exception(response);
+            }
         }
 
         public static void Connect(String host, int port)
         {
-            var command = new Command("host:connect:" + host + ":" + port);
+            using (var link = new AdbLink())
+            {
+                link.Send("host:connect:" + host + ":" + port);
 
-            var response = command.Execute().AsString();
+                var length = link.RecieveLength();
+                var response = link.Recieve(length);
 
-            if (response.Contains("unable to connect"))
-                throw new Exception(response);
+                if (response.Contains("unable to connect"))
+                    throw new Exception(response);
+            }
         }
 
         public static void Disconnect(String host, int port)
         {
-            var command = new Command("host:disconnect:" + host + ":" + port);
+            using (var link = new AdbLink())
+            {
+                link.Send("host:disconnect:" + host + ":" + port);
 
-            command.Execute();
+                var length = link.RecieveLength();
+                var version = link.Recieve(length);
+            }
         }
 
         public static void Disconnect(String host)
         {
-            var command = new Command("host:disconnect:" + host);
+            using (var link = new AdbLink())
+            {
+                link.Send("host:disconnect:" + host);
 
-            command.Execute();
+                var length = link.RecieveLength();
+                var version = link.Recieve(length);
+            }
         }
 
         public static void KillServer()
         {
-            var command = new Command("host:kill");
-
-            try
+            using (var link = new AdbLink())
             {
-                command.Execute();
-            }
-            catch
-            {
-                // this code always throw exception
+                link.Send("host:kill");
             }
         }
 
         public static String Version()
         {
-            var command = new Command("host:version");
+            using (var link = new AdbLink())
+            {
+                link.Send("host:version");
 
-            var response = command.Execute();
+                var length = link.RecieveLength();
+                var version = link.Recieve(length);
 
-            return response.AsNumber().ToString();
+                return int.Parse(version, NumberStyles.HexNumber).ToString();
+            }
         }
     }
 }

@@ -45,8 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Adb.cs" />
-    <Compile Include="Command.cs" />
-    <Compile Include="CommandOutput.cs" />
+    <Compile Include="AdbLink.cs" />
+    <Compile Include="AdbDevice.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

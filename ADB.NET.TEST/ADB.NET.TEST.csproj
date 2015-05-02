@@ -52,6 +52,8 @@
   <ItemGroup>
     <Compile Include="ServerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DeviceTest.cs" />
+    <Compile Include="MiscTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ADB.NET\ADB.NET.csproj">
